@@ -1,5 +1,8 @@
 package tn.esprit.autoloc.autolocapi.domain;
 
 public enum CategorieVehicule {
-    BERLINE
+    CITADINE,
+    BERLINE,
+    SUV,
+    UTILITAIRE
 }
