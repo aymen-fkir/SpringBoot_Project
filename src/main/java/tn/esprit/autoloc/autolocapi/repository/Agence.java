@@ -24,6 +24,8 @@ public class Agence {
     private String ville;
     private String adresse;
     private String telephone;
+    @OneToMany(mappedBy = "agence", cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    private Set<Vehicule> vehicules;
     @OneToMany(mappedBy = "agence", fetch = FetchType.LAZY)
     private Set<Employe> employes;
 
