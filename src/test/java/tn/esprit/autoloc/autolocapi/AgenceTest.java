@@ -12,6 +12,9 @@ import tn.esprit.autoloc.autolocapi.domain.StatutVehicule;
 import tn.esprit.autoloc.autolocapi.repository.Agence;
 import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
 import tn.esprit.autoloc.autolocapi.repository.Vehicule;
+import tn.esprit.autoloc.autolocapi.service.AgenceServiceImpl;
+import tn.esprit.autoloc.autolocapi.service.IAgenceService;
+import tn.esprit.autoloc.autolocapi.service.IGenericService;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -23,7 +26,7 @@ import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-interface basicAgenceRepository extends CrudRepository<Agence, Long> {
+interface AgenceRepositoryMock extends CrudRepository<Agence, Long> {
 
 }
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -31,9 +34,12 @@ interface basicAgenceRepository extends CrudRepository<Agence, Long> {
 public class AgenceTest {
 
     @Autowired
-    private basicAgenceRepository agencerepository;
+    private AgenceRepositoryMock agencerepository;
     @Autowired
     private IAgenceRepository fullAgenceRepository  ;
+    @Autowired
+    private AgenceServiceImpl agenceService;
+
 
     private Agence addAgence(CrudRepository<Agence,Long> repository) {
         Agence ag = Agence.builder()
@@ -69,16 +75,8 @@ public class AgenceTest {
         return repository.save(ag);
     }
 
-    @Test
-    public void basicAddAgence() {
-        Agence saved = addAgence(this.agencerepository);
-        assertThat(saved.getIdAgence()).isNotNull();
-    }
-
-    @Test
-    public void fullAddAgence() {
-        Agence saved = addAgence(this.fullAgenceRepository);
-        assertThat(saved.getIdAgence()).isNotNull();
+    public Agence createAgence(IGenericService<Agence,Long> agenceService,Agence agence) {
+        return  agenceService.create(agence);
     }
 
     public String loadAgence(CrudRepository<Agence,Long> repository){
@@ -112,5 +110,28 @@ public class AgenceTest {
     public void fullLoadAgence() {
         String all = loadAgence(this.fullAgenceRepository);
         assertThat(all).isNotEmpty();
+    }
+    @Test
+    public void basicAddAgence() {
+        Agence saved = addAgence(this.agencerepository);
+        assertThat(saved.getIdAgence()).isNotNull();
+    }
+
+    @Test
+    public void fullAddAgence() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        assertThat(saved.getIdAgence()).isNotNull();
+    }
+    @Test
+    public void testCreateAgence(){
+        Agence ag = Agence.builder()
+                // Remove .idAgence(200L) so it defaults to null for a new record
+                .nom("Agence ariana")
+                .ville("Tunis")
+                .adresse("1 Rue Hedi")
+                .telephone("71585874")
+                .vehicules(new HashSet<>())
+                .build();
+        assertThat(this.createAgence(this.agenceService, ag)).isNotNull();
     }
 }
