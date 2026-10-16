@@ -8,7 +8,7 @@ import tn.esprit.autoloc.autolocapi.repository.Agence;
 import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
 
 import java.util.List;
-//@Service
+@Service
 @RequiredArgsConstructor
 public class BasicAgenceServiceImpl implements IAgenceService {
     private final IAgenceRepository agenceRepository;
@@ -29,9 +29,11 @@ public class BasicAgenceServiceImpl implements IAgenceService {
     }
 
     @Override
-    public Agence findById(long id) {
+    public Agence findById(Long id) {
         return agenceRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("agnce" , Long.toString(id)));
+
     }
+
 
     @Override
     public List<Agence> findAll() {
