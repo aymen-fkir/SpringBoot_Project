@@ -1,12 +1,13 @@
 package tn.esprit.autoloc.autolocapi.service;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
 import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.repository.Maintenance;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
+@Service
 public class MaintenanceServiceImp extends GenericServiceImpl<Maintenance,Long>{
 
     public MaintenanceServiceImp(JpaRepository<Maintenance, Long> repository) {
@@ -15,7 +16,7 @@ public class MaintenanceServiceImp extends GenericServiceImpl<Maintenance,Long>{
 
     @Override
     public boolean check(Maintenance entity, boolean isNew) {
-        return Utils.isNotEmpty(entity.getIdMaintenance().toString());
+        return entity != null && Utils.isNotEmpty(entity.getDescription());
     }
 
     @Override

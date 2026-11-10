@@ -1,5 +1,6 @@
 package tn.esprit.autoloc.autolocapi.service;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import tn.esprit.autoloc.autolocapi.Utils;
@@ -18,9 +19,10 @@ public abstract class GenericServiceImpl<T, ID> implements IGenericService<T, ID
     public abstract boolean check(T entity, boolean isNew);
 
     @Override
+    @JsonManagedReference
     public T create(T entity) {
         if (getId(entity) != null) {
-            throw new IllegalArgumentException("id can't be null");
+            throw new IllegalArgumentException("id should be null");
         }
         if (!check(entity, true)) {
             throw new IllegalStateException("Entity non valide");

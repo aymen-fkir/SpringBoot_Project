@@ -1,4 +1,5 @@
 package tn.esprit.autoloc.autolocapi.repository;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import tn.esprit.autoloc.autolocapi.domain.*;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +26,8 @@ public class Employe {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private RoleEmploye role;
     @ManyToOne
+    @JoinColumn(name="agence_id_agence")
+    @JsonBackReference
     private Agence agence;
 
 

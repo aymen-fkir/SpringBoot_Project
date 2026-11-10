@@ -20,7 +20,7 @@ public class AgenceServiceImpl extends GenericServiceImpl<Agence,Long>{
     };
 
     public Long getId(Agence entity) {
-        return entity.getIdAgence();
+        return entity.getId();
     }
 
     public void  setFields(Long id, Agence agence) {

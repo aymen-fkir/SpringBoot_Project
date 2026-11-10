@@ -1,11 +1,13 @@
 package tn.esprit.autoloc.autolocapi.service;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
 import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.repository.Reservation;
 
 import java.util.Optional;
 
+@Service
 public class ReservationServiceImp extends GenericServiceImpl<Reservation, Long> {
 
     public ReservationServiceImp(JpaRepository<Reservation, Long> repository) {
@@ -14,7 +16,7 @@ public class ReservationServiceImp extends GenericServiceImpl<Reservation, Long>
 
     @Override
     public boolean check(Reservation entity, boolean isNew) {
-        return Utils.isNotEmpty(entity.getIdReservation().toString());
+        return entity != null && entity.getDateDebut() != null;
     }
 
     @Override

@@ -1,4 +1,5 @@
 package tn.esprit.autoloc.autolocapi.repository;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -43,6 +44,8 @@ public class Vehicule {
     @Column(nullable = false, length = 20)
     private StatutVehicule statut;
     @ManyToOne
+    @JoinColumn(name = "agence_id_agence") // Good practice to specify the join column
+    @JsonBackReference // Tells Jackson to ignore this side during serialization/deserialization to prevent loops
     private Agence agence;
 
     @OneToMany(mappedBy = "vehicule", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)

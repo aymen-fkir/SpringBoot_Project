@@ -1,9 +1,11 @@
 package tn.esprit.autoloc.autolocapi.service;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
 import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.repository.Paiement;
 
+@Service
 public class PaiementServiceImp extends GenericServiceImpl<Paiement,Long>{
     public PaiementServiceImp(JpaRepository<Paiement, Long> repository) {
         super(repository);
@@ -27,7 +29,7 @@ public class PaiementServiceImp extends GenericServiceImpl<Paiement,Long>{
 
     @Override
     public boolean check(Paiement entity, boolean isNew) {
-        return Utils.isNotEmpty(entity.getIdPaiement().toString());
+        return entity != null && entity.getMontant() != null;
     }
 
     @Override

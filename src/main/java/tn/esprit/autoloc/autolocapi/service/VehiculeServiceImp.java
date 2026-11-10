@@ -1,11 +1,13 @@
 package tn.esprit.autoloc.autolocapi.service;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
 import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.repository.Vehicule;
 
 import java.util.Optional;
 
+@Service
 public class VehiculeServiceImp extends GenericServiceImpl<Vehicule,Long>{
     public VehiculeServiceImp(JpaRepository<Vehicule, Long> repository) {
         super(repository);
@@ -13,7 +15,7 @@ public class VehiculeServiceImp extends GenericServiceImpl<Vehicule,Long>{
 
     @Override
     public boolean check(Vehicule entity, boolean isNew) {
-        return Utils.isNotEmpty(entity.getIdVehicule().toString());
+        return entity != null && Utils.isNotEmpty(entity.getImmatriculation());
     }
 
     @Override

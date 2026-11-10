@@ -15,7 +15,7 @@ public class ContractServiceImp extends GenericServiceImpl<Contrat,Long>{
 
     @Override
     public boolean check(Contrat entity, boolean isNew) {
-        return Utils.isNotEmpty(entity.getIdContrat().toString());
+        return isNew ? (entity != null) : (entity != null && entity.getIdContrat() != null);
     }
 
     @Override
