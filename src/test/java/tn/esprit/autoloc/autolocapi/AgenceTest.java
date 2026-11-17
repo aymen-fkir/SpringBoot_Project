@@ -1,27 +1,24 @@
 package tn.esprit.autoloc.autolocapi;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tn.esprit.autoloc.autolocapi.calcul.VehiculeOffre;
 import tn.esprit.autoloc.autolocapi.domain.CategorieVehicule;
 import tn.esprit.autoloc.autolocapi.domain.StatutVehicule;
 import tn.esprit.autoloc.autolocapi.repository.Agence;
 import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
 import tn.esprit.autoloc.autolocapi.repository.Vehicule;
 import tn.esprit.autoloc.autolocapi.service.AgenceServiceImpl;
-import tn.esprit.autoloc.autolocapi.service.IAgenceService;
-import tn.esprit.autoloc.autolocapi.service.IGenericService;
+import tn.esprit.autoloc.autolocapi.service.interfaces.IGenericService;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,5 +130,36 @@ public class AgenceTest {
                 .vehicules(new HashSet<>())
                 .build();
         assertThat(this.createAgence(this.agenceService, ag)).isNotNull();
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testSimulerAgence() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        String rapport = this.agenceService.simuler(saved, 2, VehiculeOffre.WEEKEND);
+        assertThat(rapport).isNotNull();
+        assertThat(rapport).contains("Id:");
+        assertThat(rapport).contains(saved.getNom());
+        assertThat(rapport).contains(saved.getTelephone());
+        assertThat(rapport).contains("Nombre de jours: 2");
+        assertThat(rapport).contains("Offre: WEEKEND");
+        assertThat(rapport).contains("Total des tarifs des véhicules");
+        // Vehicle 1: 100 * 0.8 * 2 = 160.0, Vehicle 2: 80 * 0.8 * 2 = 128.0 -> Total = 288.0
+        assertThat(rapport).contains("288.0");
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testSimulerAgenceById() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        Long id = saved.getId() != null ? saved.getId() : saved.getIdAgence();
+        String rapport = this.agenceService.simuler(id, 3, VehiculeOffre.STANDARD);
+        assertThat(rapport).isNotNull();
+        assertThat(rapport).contains(String.valueOf(id));
+        assertThat(rapport).contains(saved.getNom());
+        assertThat(rapport).contains("Nombre de jours: 3");
+        assertThat(rapport).contains("Total des tarifs des véhicules");
+        // Vehicle 1: 100 * 3 = 300.0, Vehicle 2: 80 * 3 = 240.0 -> Total = 540.0
+        assertThat(rapport).contains("540.0");
     }
 }

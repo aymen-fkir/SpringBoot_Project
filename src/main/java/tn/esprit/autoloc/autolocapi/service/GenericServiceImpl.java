@@ -3,9 +3,8 @@ package tn.esprit.autoloc.autolocapi.service;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
-import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.exception.ResourceNotFoundException;
-import tn.esprit.autoloc.autolocapi.repository.Client;
+import tn.esprit.autoloc.autolocapi.service.interfaces.IGenericService;
 
 import java.util.List;
 
