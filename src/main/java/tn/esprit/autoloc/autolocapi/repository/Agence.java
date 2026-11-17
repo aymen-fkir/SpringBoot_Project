@@ -35,6 +35,11 @@ public class Agence {
     private String ville;
     private String adresse;
     private String telephone;
+
+    // 11. Champ mappé entier nommé effectif
+    @Column(name = "effectif")
+    private Integer effectif;
+
     @OneToMany(mappedBy = "agence", cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JsonManagedReference
     private Set<Vehicule> vehicules;
@@ -42,5 +47,19 @@ public class Agence {
     @JsonManagedReference
     private Set<Employe> employes;
 
+    // 10. Méthodes au niveau des entités pour symétriser la relation agence/employé
+    public void addEmploye(Employe employe) {
+        if (this.employes == null) {
+            this.employes = new java.util.HashSet<>();
+        }
+        this.employes.add(employe);
+        employe.setAgence(this);
+    }
 
+    public void removeEmploye(Employe employe) {
+        if (this.employes != null) {
+            this.employes.remove(employe);
+        }
+        employe.setAgence(null);
+    }
 }

@@ -21,6 +21,17 @@ public class Equipement {
 
     private String libelle;
     @ManyToMany(mappedBy = "equipements", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Set<Vehicule> vehicules;
 
+    @PreRemove
+    private void preRemove() {
+        if (vehicules != null) {
+            for (Vehicule v : vehicules) {
+                if (v.getEquipements() != null) {
+                    v.getEquipements().remove(this);
+                }
+            }
+        }
+    }
 }

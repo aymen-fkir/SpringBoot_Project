@@ -19,4 +19,14 @@ public interface IAgenceService extends IGenericService<Agence, Long> {
     default String simuler(Long id, int nb_jour, VehiculeOffre offre) {
         throw new UnsupportedOperationException("La méthode simuler n'est pas supportée dans l'implémentation basique.");
     }
+
+    default Agence updateAgenceWithEmployes(Agence agence, List<tn.esprit.autoloc.autolocapi.repository.Employe> nouveauxEmployes) {
+        throw new UnsupportedOperationException("Non supporté");
+    }
+    default Agence updateAgenceWithEmployes(Agence agence) {
+        throw new UnsupportedOperationException("Non supporté");
+    }
+    default Agence updateAgenceWithEmployes(Long id, Agence agence) {
+        throw new UnsupportedOperationException("Non supporté");
+    }
 }

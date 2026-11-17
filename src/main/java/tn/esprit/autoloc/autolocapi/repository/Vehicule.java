@@ -1,5 +1,7 @@
 package tn.esprit.autoloc.autolocapi.repository;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,12 +51,15 @@ public class Vehicule {
     private Agence agence;
 
     @OneToMany(mappedBy = "vehicule", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Reservation> reservations;
 
     @OneToMany(mappedBy = "vehicule", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Maintenance> maintenances;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JsonIgnoreProperties("vehicules")
     @JoinTable(name = "vehicule_equipement",
             joinColumns = @JoinColumn(name = "id_vehicule"),
             inverseJoinColumns = @JoinColumn(name = "id_equipement"))

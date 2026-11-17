@@ -51,6 +51,38 @@ public class AgenceController {
         }
     }
 
+    // 13. API REST acceptant une structure imbriquée (Agence avec ses Employés)
+    @PutMapping("/{id}")
+    public Agence update(
+            @PathVariable Long id,
+            @RequestBody Agence entity) {
+        if (id == null || id <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid agency ID provided.");
+        }
+        if (entity == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agency payload cannot be null.");
+        }
+        entity.setId(id);
+        entity.setIdAgence(id);
+        try {
+            return agenceService.updateAgenceWithEmployes(entity);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
+    @PutMapping
+    public Agence updateDirect(@RequestBody Agence entity) {
+        if (entity == null || entity.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Agency ID is required for update.");
+        }
+        try {
+            return agenceService.updateAgenceWithEmployes(entity);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
     @GetMapping("/{id}/simuler")
     public String simuler(
             @PathVariable Long id,

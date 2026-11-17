@@ -21,6 +21,10 @@ import tn.esprit.autoloc.autolocapi.service.AgenceServiceSimulationDecorator;
 import tn.esprit.autoloc.autolocapi.service.BasicAgenceServiceImpl;
 import tn.esprit.autoloc.autolocapi.service.VehiculeServiceImp;
 import tn.esprit.autoloc.autolocapi.service.interfaces.IGenericService;
+import tn.esprit.autoloc.autolocapi.domain.RoleEmploye;
+import tn.esprit.autoloc.autolocapi.repository.Employe;
+import tn.esprit.autoloc.autolocapi.repository.IEmployeRepository;
+import tn.esprit.autoloc.autolocapi.service.EmployeServiceImp;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -29,6 +33,7 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 interface AgenceRepositoryMock extends CrudRepository<Agence, Long> {
 
@@ -49,6 +54,10 @@ public class AgenceTest {
     private AgenceServiceSimulationDecorator agenceServiceSimulationDecorator;
     @Autowired
     private VehiculeServiceImp vehiculeService;
+    @Autowired
+    private IEmployeRepository employeRepository;
+    @Autowired
+    private EmployeServiceImp employeService;
 
 
     private Agence addAgence(CrudRepository<Agence,Long> repository) {
@@ -232,5 +241,81 @@ public class AgenceTest {
         // LONGUE_DUREE (sum > 2000): 100 * 0.75 * 30 = 2250.0 -> 2250 - (100 * 0.05) = 2245.0
         double tarifLongueDureeBonus = this.vehiculeService.calculTarif(v, 30, VehiculeOffre.LONGUE_DUREE);
         assertThat(tarifLongueDureeBonus).isEqualTo(2245.0);
+    }
+
+    // 10. Symétrisation relation agence/employé
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testSymetrisationAgenceEmploye() {
+        Agence ag = addAgence(this.fullAgenceRepository);
+        Employe emp = Employe.builder()
+                .nom("Ben Salah")
+                .prenom("Mohamed")
+                .role(RoleEmploye.AGENT)
+                .build();
+
+        // Ajout via méthode de symétrisation
+        ag.addEmploye(emp);
+        assertThat(ag.getEmployes()).contains(emp);
+        assertThat(emp.getAgence()).isEqualTo(ag);
+
+        // Suppression via méthode de symétrisation
+        ag.removeEmploye(emp);
+        assertThat(ag.getEmployes()).doesNotContain(emp);
+        assertThat(emp.getAgence()).isNull();
+    }
+
+    // 12, 13, 14 & 18. Mise à jour de l'agence avec deux employés valides (structure imbriquée)
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testUpdateAgenceWithEmployesValides() {
+        Agence ag = addAgence(this.fullAgenceRepository);
+
+        Employe emp1 = Employe.builder().nom("Ben Salah").prenom("Mohamed").role(RoleEmploye.AGENT).build();
+        Employe emp2 = Employe.builder().nom("Trabelsi").prenom("Ali").role(RoleEmploye.MANAGER).build();
+
+        Set<Employe> employes = new HashSet<>();
+        employes.add(emp1);
+        employes.add(emp2);
+        ag.setEmployes(employes);
+
+        // Mise à jour de l'agence avec structure imbriquée
+        Agence updated = this.agenceService.updateAgenceWithEmployes(ag);
+        assertThat(updated).isNotNull();
+        // 11 & 12. Effectif mis à jour avec la taille de la liste
+        assertThat(updated.getEffectif()).isEqualTo(2);
+
+        // 14. Vérification des insertions dans la base
+        assertThat(emp1.getIdEmploye()).isNotNull();
+        assertThat(emp2.getIdEmploye()).isNotNull();
+        assertThat(employeRepository.findById(emp1.getIdEmploye())).isPresent();
+        assertThat(employeRepository.findById(emp2.getIdEmploye())).isPresent();
+    }
+
+    // 15, 16 & 17. Test avec 2ème employé invalide et vérification de la cohérence via rollback @Transactional
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testUpdateAgenceWithDeuxiemeEmployeInvalideRollback() {
+        Agence ag = addAgence(this.fullAgenceRepository);
+        long countEmployesAvant = this.employeRepository.count();
+
+        // 1er employé valide, 2ème employé INVALIDE (nom vide/null -> check() renvoie false)
+        Employe emp1 = Employe.builder().nom("Ben Salah").prenom("Mohamed").role(RoleEmploye.AGENT).build();
+        Employe emp2Invalide = Employe.builder().nom("").prenom("Invalide").role(RoleEmploye.AGENT).build();
+
+        Set<Employe> employes = new HashSet<>();
+        employes.add(emp1);
+        employes.add(emp2Invalide);
+        ag.setEmployes(employes);
+
+        // 15. Re-jouer le test : le deuxième employé lève une exception
+        assertThrows(IllegalStateException.class, () -> {
+            this.agenceService.updateAgenceWithEmployes(ag);
+        });
+
+        // 16 & 17. Grâce à @Transactional, le 1er employé n'a pas été inséré (rollback)
+        // Pas d'incohérence : le nombre d'employés dans la base reste inchangé
+        long countEmployesApres = this.employeRepository.count();
+        assertThat(countEmployesApres).isEqualTo(countEmployesAvant);
     }
 }

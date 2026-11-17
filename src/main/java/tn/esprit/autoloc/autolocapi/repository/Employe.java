@@ -30,5 +30,21 @@ public class Employe {
     @JsonBackReference
     private Agence agence;
 
+    // 10. Méthodes au niveau des entités pour symétriser la relation agence/employé
+    public void affecterAgence(Agence agence) {
+        this.agence = agence;
+        if (agence != null) {
+            if (agence.getEmployes() == null) {
+                agence.setEmployes(new java.util.HashSet<>());
+            }
+            agence.getEmployes().add(this);
+        }
+    }
 
+    public void desaffecterAgence() {
+        if (this.agence != null && this.agence.getEmployes() != null) {
+            this.agence.getEmployes().remove(this);
+        }
+        this.agence = null;
+    }
 }
