@@ -9,10 +9,17 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import tn.esprit.autoloc.autolocapi.calcul.VehiculeOffre;
 import tn.esprit.autoloc.autolocapi.domain.CategorieVehicule;
 import tn.esprit.autoloc.autolocapi.domain.StatutVehicule;
+import tn.esprit.autoloc.autolocapi.io.ConsoleRapportDecorator;
+import tn.esprit.autoloc.autolocapi.io.IRapport;
+import tn.esprit.autoloc.autolocapi.io.RapportFactory;
+import tn.esprit.autoloc.autolocapi.io.RapportType;
 import tn.esprit.autoloc.autolocapi.repository.Agence;
 import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
 import tn.esprit.autoloc.autolocapi.repository.Vehicule;
 import tn.esprit.autoloc.autolocapi.service.AgenceServiceImpl;
+import tn.esprit.autoloc.autolocapi.service.AgenceServiceSimulationDecorator;
+import tn.esprit.autoloc.autolocapi.service.BasicAgenceServiceImpl;
+import tn.esprit.autoloc.autolocapi.service.VehiculeServiceImp;
 import tn.esprit.autoloc.autolocapi.service.interfaces.IGenericService;
 
 import java.math.BigDecimal;
@@ -36,6 +43,12 @@ public class AgenceTest {
     private IAgenceRepository fullAgenceRepository  ;
     @Autowired
     private AgenceServiceImpl agenceService;
+    @Autowired
+    private BasicAgenceServiceImpl basicAgenceService;
+    @Autowired
+    private AgenceServiceSimulationDecorator agenceServiceSimulationDecorator;
+    @Autowired
+    private VehiculeServiceImp vehiculeService;
 
 
     private Agence addAgence(CrudRepository<Agence,Long> repository) {
@@ -161,5 +174,63 @@ public class AgenceTest {
         assertThat(rapport).contains("Total des tarifs des véhicules");
         // Vehicle 1: 100 * 3 = 300.0, Vehicle 2: 80 * 3 = 240.0 -> Total = 540.0
         assertThat(rapport).contains("540.0");
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testBasicAgenceServiceImplThrowsException() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        org.junit.jupiter.api.Assertions.assertThrows(
+                UnsupportedOperationException.class,
+                () -> this.basicAgenceService.simuler(saved, 2, VehiculeOffre.WEEKEND)
+        );
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testSimulerWithFactoryConsoleTotalDecorator() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        // Switch report to ConsoleTotal via Factory / Decorator
+        IRapport consoleRapport = RapportFactory.createRapport(RapportType.CONSOLE_TOTAL);
+        this.agenceService.setRapport(consoleRapport);
+
+        String result = this.agenceService.simuler(saved, 2, VehiculeOffre.WEEKEND);
+        // Returns the total as String: 100 * 0.8 * 2 + 80 * 0.8 * 2 = 288.0
+        assertThat(result).isEqualTo("288.0");
+
+        // Reset to standard text report
+        this.agenceService.setRapport(RapportFactory.createRapport(RapportType.TEXTUEL));
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testAgenceServiceSimulationDecorator() {
+        Agence saved = addAgence(this.fullAgenceRepository);
+        String result = this.agenceServiceSimulationDecorator.simuler(saved, 2, VehiculeOffre.WEEKEND);
+        // Decorator prints header to console and returns the total
+        assertThat(result).isEqualTo("288.0");
+    }
+
+    @Test
+    @org.junit.jupiter.api.Test
+    public void testStrategyOffresViaMap() {
+        Vehicule v = new Vehicule();
+        v.setTarifJournalier(new BigDecimal("100.00"));
+
+        // STANDARD: 100 * 3 = 300.0
+        double tarifStandard = this.vehiculeService.calculTarif(v, 3, VehiculeOffre.STANDARD);
+        assertThat(tarifStandard).isEqualTo(300.0);
+
+        // WEEKEND: 100 * 0.8 * 2 = 160.0
+        double tarifWeekend = this.vehiculeService.calculTarif(v, 2, VehiculeOffre.WEEKEND);
+        assertThat(tarifWeekend).isEqualTo(160.0);
+
+        // LONGUE_DUREE (sum <= 2000): 100 * 0.75 * 10 = 750.0
+        double tarifLongueDuree = this.vehiculeService.calculTarif(v, 10, VehiculeOffre.LONGUE_DUREE);
+        assertThat(tarifLongueDuree).isEqualTo(750.0);
+
+        // LONGUE_DUREE (sum > 2000): 100 * 0.75 * 30 = 2250.0 -> 2250 - (100 * 0.05) = 2245.0
+        double tarifLongueDureeBonus = this.vehiculeService.calculTarif(v, 30, VehiculeOffre.LONGUE_DUREE);
+        assertThat(tarifLongueDureeBonus).isEqualTo(2245.0);
     }
 }

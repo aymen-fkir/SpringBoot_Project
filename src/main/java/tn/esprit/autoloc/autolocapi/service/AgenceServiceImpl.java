@@ -5,19 +5,24 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import tn.esprit.autoloc.autolocapi.Utils;
 import tn.esprit.autoloc.autolocapi.calcul.VehiculeOffre;
+import tn.esprit.autoloc.autolocapi.io.IRapport;
+import tn.esprit.autoloc.autolocapi.io.RapportFactory;
+import tn.esprit.autoloc.autolocapi.io.RapportType;
 import tn.esprit.autoloc.autolocapi.repository.Agence;
 import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
 import tn.esprit.autoloc.autolocapi.repository.Vehicule;
 import tn.esprit.autoloc.autolocapi.service.interfaces.IAgenceService;
+import tn.esprit.autoloc.autolocapi.service.interfaces.ISimulationService;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @Primary
-public class AgenceServiceImpl extends GenericServiceImpl<Agence, Long> implements IAgenceService {
+public class AgenceServiceImpl extends GenericServiceImpl<Agence, Long> implements IAgenceService, ISimulationService {
 
     private final VehiculeServiceImp vehiculeService;
+    private IRapport rapport = RapportFactory.createRapport(RapportType.TEXTUEL);
 
     public AgenceServiceImpl(IAgenceRepository agenceRepository) {
         this(agenceRepository, new VehiculeServiceImp(null));
@@ -27,6 +32,14 @@ public class AgenceServiceImpl extends GenericServiceImpl<Agence, Long> implemen
     public AgenceServiceImpl(IAgenceRepository agenceRepository, @Autowired(required = false) VehiculeServiceImp vehiculeService) {
         super(agenceRepository);
         this.vehiculeService = vehiculeService != null ? vehiculeService : new VehiculeServiceImp(null);
+    }
+
+    public void setRapport(IRapport rapport) {
+        this.rapport = rapport != null ? rapport : RapportFactory.createRapport(RapportType.TEXTUEL);
+    }
+
+    public IRapport getRapport() {
+        return this.rapport;
     }
 
     @Override
@@ -52,49 +65,23 @@ public class AgenceServiceImpl extends GenericServiceImpl<Agence, Long> implemen
         }
     }
 
+    public double calculerTotalTarifs(Agence agence, int nb_jour, VehiculeOffre offre) {
+        double total = 0.0;
+        if (agence != null && agence.getVehicules() != null) {
+            for (Vehicule v : agence.getVehicules()) {
+                total += vehiculeService.calculTarif(v, nb_jour, offre);
+            }
+        }
+        return total;
+    }
+
     @Override
     public String simuler(Agence agence, int nb_jour, VehiculeOffre offre) {
         if (agence == null) {
             throw new IllegalArgumentException("L'agence ne peut pas être nulle.");
         }
-
-        Long agenceId = agence.getId() != null ? agence.getId() : agence.getIdAgence();
-        String nom = agence.getNom() != null ? agence.getNom() : "";
-        String telephone = agence.getTelephone() != null ? agence.getTelephone() : "";
-
-        double total = 0.0;
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== Rapport de Simulation Agence ===\n");
-        sb.append("En-tête:\n");
-        sb.append("Id: ").append(agenceId != null ? agenceId : "N/A").append("\n");
-        sb.append("Nom: ").append(nom).append("\n");
-        sb.append("Numéro de tel: ").append(telephone).append("\n");
-        sb.append("------------------------------------\n");
-        sb.append("Paramètres de simulation:\n");
-        sb.append("Nombre de jours: ").append(nb_jour).append("\n");
-        sb.append("Offre: ").append(offre != null ? offre.name() : "STANDARD").append("\n");
-        sb.append("------------------------------------\n");
-        sb.append("Détail des véhicules:\n");
-
-        if (agence.getVehicules() != null && !agence.getVehicules().isEmpty()) {
-            for (Vehicule v : agence.getVehicules()) {
-                double tarif = vehiculeService.calculTarif(v, nb_jour, offre);
-                total += tarif;
-                sb.append("- ")
-                  .append(v.getImmatriculation() != null ? v.getImmatriculation() : ("Véhicule #" + v.getIdVehicule()))
-                  .append(" (").append(v.getMarque() != null ? v.getMarque() : "")
-                  .append(" ").append(v.getModele() != null ? v.getModele() : "").append(")")
-                  .append(" : ").append(tarif).append(" DT\n");
-            }
-        } else {
-            sb.append("Aucun véhicule associé à cette agence.\n");
-        }
-
-        sb.append("------------------------------------\n");
-        sb.append("Total des tarifs des véhicules: ").append(total).append(" DT\n");
-        sb.append("====================================");
-
-        return sb.toString();
+        double total = calculerTotalTarifs(agence, nb_jour, offre);
+        return rapport.generer(agence, nb_jour, offre, total);
     }
 
     @Override

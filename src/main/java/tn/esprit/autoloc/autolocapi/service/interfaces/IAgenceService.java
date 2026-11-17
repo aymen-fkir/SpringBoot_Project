@@ -13,6 +13,10 @@ public interface IAgenceService extends IGenericService<Agence, Long> {
     Agence update(Long id,Agence agence);
     void deleteByid(Long id);
     boolean hasVehicules(Long id);
-    String simuler(Agence agence, int nb_jour, VehiculeOffre offre);
-    String simuler(Long id, int nb_jour, VehiculeOffre offre);
+    default String simuler(Agence agence, int nb_jour, VehiculeOffre offre) {
+        throw new UnsupportedOperationException("La méthode simuler n'est pas supportée dans l'implémentation basique.");
+    }
+    default String simuler(Long id, int nb_jour, VehiculeOffre offre) {
+        throw new UnsupportedOperationException("La méthode simuler n'est pas supportée dans l'implémentation basique.");
+    }
 }
